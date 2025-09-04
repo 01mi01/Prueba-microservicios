@@ -5,3 +5,4 @@ microservices/sales/client/ProductResponse.class
 microservices/sales/client/WarehouseClient.class
 microservices/sales/entity/Sale.class
 microservices/sales/client/ProductUpdateRequest.class
+microservices/sales/controller/AccountingRequest.class

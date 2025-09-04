@@ -545,3 +545,98 @@ COMMENT ON COLUMN Sale.total_amount IS 'Monto total calculado automáticamente (
 COMMENT ON COLUMN Sale.final_amount IS 'Monto final después de descuentos';
 ```
 
+## Requerimientos
+
+### Java 17
+Instalar Java 17 y verificar la versión.
+
+```bash
+sudo apt update
+sudo apt install openjdk-17-jdk -y
+```
+```bash
+sudo update-alternatives --install /usr/bin/java java /usr/lib/jvm/java-17-openjdk-amd64/bin/java 1
+
+sudo update-alternatives --install /usr/bin/javac javac /usr/lib/jvm/java-17-openjdk-amd64/bin/javac 1
+```
+
+```bash
+export JAVA_HOME=/usr/lib/jvm/java-17-openjdk-amd64
+export PATH=$JAVA_HOME/bin:$PATH
+
+echo 'export JAVA_HOME=/usr/lib/jvm/java-17-openjdk-amd64' >> ~/.bashrc
+echo 'export PATH=$JAVA_HOME/bin:$PATH' >> ~/.bashrc
+source ~/.bashrc
+```
+
+```bash
+java -version
+javac -version
+```
+
+## Tercera terminal - Iniciar Discovery Server
+```bash
+cd discovery-server
+mvn clean compile
+mvn spring-boot:run
+```
+Puerto 8761
+
+## Cuarta terminal - Iniciar Warehouse Service
+```bash
+cd warehouse-service
+mvn clean compile
+mvn spring-boot:run
+```
+
+## Quinta terminal - Iniciar Sales Service
+```bash
+cd sales-service
+mvn clean compile
+mvn spring-boot:run
+```
+
+## Sexta terminal - Iniciar Accounting Service
+
+```bash
+cd accounting-service
+mvn clean compile
+mvn spring-boot:run
+```
+
+## Séptima terminal - Gateway
+
+```bash
+cd api-gateway
+mvn clean compile
+mvn spring-boot:run
+```
+
+## Octava terminal - Pruebas
+
+### Prueba Rollback
+
+#### Transacción válida
+1. La transacción se realiza correctamente, no ocurren errores y se registra la venta.
+
+```bash
+curl -X POST "http://localhost:8080/api/sales?productId=1&quantity=1&testPrice=10.00"
+```
+
+2. Verificar que se redujo el stock en Warehouse.
+
+```bash
+docker exec -it mysql-warehouse mysql -u root -p123456 -e "USE warehouse; SELECT id, name, stock_quantity FROM product WHERE id = 1;"
+```
+
+3. Verificar que se creó la venta en Sales
+
+```bash
+docker exec -it postgres-db psql -U postgres -d sales -c "SELECT id, sale_number, product_id, quantity, unit_price, total_amount FROM sale ORDER BY id DESC LIMIT 1;"
+```
+
+4. Verificar que se crearon entradas en Accounting
+
+```bash
+docker exec -it postgres-db psql -U postgres -d accounting -c "SELECT id, journal_entry_number, account_code, account_name, debit_amount, credit_amount FROM journal ORDER BY id DESC LIMIT 2;"
+```

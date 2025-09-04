@@ -1,0 +1,6 @@
+/workspaces/Prueba-microservicios/accounting-service/src/main/java/microservices/accounting/AccountingApplication.java
+/workspaces/Prueba-microservicios/accounting-service/src/main/java/microservices/accounting/controller/JournalController.java
+/workspaces/Prueba-microservicios/accounting-service/src/main/java/microservices/accounting/entity/Journal.java
+/workspaces/Prueba-microservicios/accounting-service/src/main/java/microservices/accounting/repository/JournalRepository.java
+/workspaces/Prueba-microservicios/accounting-service/src/main/java/microservices/accounting/service/JournalRequest.java
+/workspaces/Prueba-microservicios/accounting-service/src/main/java/microservices/accounting/service/JournalService.java

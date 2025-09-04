@@ -1,0 +1,6 @@
+microservices/accounting/repository/JournalRepository.class
+microservices/accounting/service/JournalRequest.class
+microservices/accounting/service/JournalService.class
+microservices/accounting/AccountingApplication.class
+microservices/accounting/entity/Journal.class
+microservices/accounting/controller/JournalController.class

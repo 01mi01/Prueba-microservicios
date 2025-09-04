@@ -1,0 +1,4 @@
+/workspaces/Prueba-microservicios/warehouse-service/src/main/java/microservices/warehouse/WarehouseApplication.java
+/workspaces/Prueba-microservicios/warehouse-service/src/main/java/microservices/warehouse/controller/ProductController.java
+/workspaces/Prueba-microservicios/warehouse-service/src/main/java/microservices/warehouse/entity/Product.java
+/workspaces/Prueba-microservicios/warehouse-service/src/main/java/microservices/warehouse/repository/ProductRepository.java

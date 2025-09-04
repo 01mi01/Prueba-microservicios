@@ -1,0 +1,7 @@
+/workspaces/Prueba-microservicios/sales-service/src/main/java/microservices/sales/SalesApplication.java
+/workspaces/Prueba-microservicios/sales-service/src/main/java/microservices/sales/client/ProductResponse.java
+/workspaces/Prueba-microservicios/sales-service/src/main/java/microservices/sales/client/ProductUpdateRequest.java
+/workspaces/Prueba-microservicios/sales-service/src/main/java/microservices/sales/client/WarehouseClient.java
+/workspaces/Prueba-microservicios/sales-service/src/main/java/microservices/sales/controller/SalesController.java
+/workspaces/Prueba-microservicios/sales-service/src/main/java/microservices/sales/entity/Sale.java
+/workspaces/Prueba-microservicios/sales-service/src/main/java/microservices/sales/repository/SaleRepository.java

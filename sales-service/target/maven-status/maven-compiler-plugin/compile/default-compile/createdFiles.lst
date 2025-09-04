@@ -1,0 +1,7 @@
+microservices/sales/repository/SaleRepository.class
+microservices/sales/controller/SalesController.class
+microservices/sales/SalesApplication.class
+microservices/sales/client/ProductResponse.class
+microservices/sales/client/WarehouseClient.class
+microservices/sales/entity/Sale.class
+microservices/sales/client/ProductUpdateRequest.class

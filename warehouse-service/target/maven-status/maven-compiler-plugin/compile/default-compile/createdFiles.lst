@@ -1,0 +1,5 @@
+microservices/warehouse/entity/Product.class
+microservices/warehouse/controller/ProductController.class
+microservices/warehouse/WarehouseApplication.class
+microservices/warehouse/repository/ProductRepository.class
+microservices/warehouse/entity/Product$ProductStatus.class

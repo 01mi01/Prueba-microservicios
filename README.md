@@ -617,6 +617,12 @@ mvn spring-boot:run
 ### Prueba Rollback
 
 #### Transacción válida
+1. Verificar que existen productos
+
+```bash
+docker exec -it mysql-warehouse mysql -u root -p123456 -e "USE warehouse; SELECT id, name, stock_quantity FROM product ORDER BY id;"
+```
+
 1. La transacción se realiza correctamente, no ocurren errores y se registra la venta.
 
 ```bash

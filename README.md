@@ -1,5 +1,7 @@
 # Microservicios
 
+GitHub Codespaces
+
 ## Primera terminal - Warehouse:
 Iniciar MySQL, crear la base de datos y conectarse a MySQL. 
 
@@ -379,7 +381,6 @@ CREATE TRIGGER trg_validate_journal_amounts_update
 Ejemplo que funciona correctamente.
 
 ```sql
--- Insert 2: Contrapartida del asiento anterior (crédito a cuentas por pagar)
 INSERT INTO JOURNAL (
     journal_entry_number,
     transaction_date,
@@ -430,7 +431,6 @@ INSERT INTO JOURNAL (
 Ejemplo que falla por tener 99 centavos.
 
 ```sql
--- Insert 1: Asiento de compra de inventario (débito a inventario, crédito a cuentas por pagar)
 INSERT INTO JOURNAL (
     journal_entry_number,
     transaction_date,
@@ -614,35 +614,67 @@ mvn spring-boot:run
 
 ## Octava terminal - Pruebas
 
-### Prueba Rollback
-
-#### Transacción válida
-1. Verificar que existen productos
+### Transacción válida
+1. Verificar que existen productos.
 
 ```bash
 docker exec -it mysql-warehouse mysql -u root -p123456 -e "USE warehouse; SELECT id, name, stock_quantity FROM product ORDER BY id;"
 ```
 
-1. La transacción se realiza correctamente, no ocurren errores y se registra la venta.
+2. La transacción se realiza correctamente, no ocurren errores y se registra la venta.
 
 ```bash
-curl -X POST "http://localhost:8080/api/sales?productId=1&quantity=1&testPrice=10.00"
+curl -v -X POST "http://localhost:8080/api/sales?productId=1&quantity=1&testPrice=10.00"
 ```
 
-2. Verificar que se redujo el stock en Warehouse.
+3. Verificar que se redujo el stock en Warehouse.
 
 ```bash
 docker exec -it mysql-warehouse mysql -u root -p123456 -e "USE warehouse; SELECT id, name, stock_quantity FROM product WHERE id = 1;"
 ```
 
-3. Verificar que se creó la venta en Sales
+4. Verificar que se creó la venta en Sales.
 
 ```bash
-docker exec -it postgres-db psql -U postgres -d sales -c "SELECT id, sale_number, product_id, quantity, unit_price, total_amount FROM sale ORDER BY id DESC LIMIT 1;"
+docker exec -it postgres-db psql -U postgres -d sales -c "SELECT id, sale_number, product_id, quantity, unit_price, total_amount FROM sale ORDER BY id DESC;"
 ```
 
-4. Verificar que se crearon entradas en Accounting
+5. Verificar que se crearon entradas en Accounting.
 
 ```bash
-docker exec -it postgres-db psql -U postgres -d accounting -c "SELECT id, journal_entry_number, account_code, account_name, debit_amount, credit_amount FROM journal ORDER BY id DESC LIMIT 2;"
+docker exec -it postgres-db psql -U postgres -d accounting -c "SELECT id, journal_entry_number, account_code, account_name, debit_amount, credit_amount FROM journal ORDER BY id DESC;"
+```
+
+### Transacción que provoca un error por los 99 centavos
+
+#### Prueba de Rollback utilizando Sales como orquestador
+
+1. Verificar que existen productos.
+
+```bash
+docker exec -it mysql-warehouse mysql -u root -p123456 -e "USE warehouse; SELECT id, name, stock_quantity FROM product ORDER BY id;"
+```
+
+2. Se intenta registrar la venta, se produce un error 400 por los 99 cenvatos y ocurre el rollback.
+
+```bash
+curl -v -X POST "http://localhost:8080/api/sales?productId=2&quantity=1&testPrice=0.99"
+```
+
+3. Verificar que NO se redujo el stock en Warehouse.
+
+```bash
+docker exec -it mysql-warehouse mysql -u root -p123456 -e "USE warehouse; SELECT id, name, stock_quantity FROM product WHERE id = 2;"
+```
+
+4. Verificar que NO se creó ninguna venta con 99 centavos en Sales.
+
+```bash
+docker exec -it postgres-db psql -U postgres -d sales -c "SELECT id, sale_number, product_id, quantity, unit_price, total_amount FROM sale ORDER BY id DESC;"
+```
+
+5. Verificar que NO se crearon entradas en Accounting.
+
+```bash
+docker exec -it postgres-db psql -U postgres -d accounting -c "SELECT id, journal_entry_number, account_code, account_name, debit_amount, credit_amount FROM journal ORDER BY id DESC;"
 ```

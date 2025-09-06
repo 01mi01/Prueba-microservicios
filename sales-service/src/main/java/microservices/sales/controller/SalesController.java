@@ -3,7 +3,6 @@ package microservices.sales.controller;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.client.HttpClientErrorException;
 import microservices.sales.entity.Sale;
@@ -31,6 +30,8 @@ public class SalesController {
     public ResponseEntity<Sale> createSale(@RequestParam Integer productId, @RequestParam Integer quantity,
             @RequestParam(required = false) BigDecimal testPrice) {
         Integer originalStock = null;
+        Sale savedSale = null;
+        
         try {
             // 1. Get product from warehouse
             ProductResponse product = warehouseClient.getProduct(productId);
@@ -43,22 +44,25 @@ public class SalesController {
             int newStock = product.getStockQuantity() - quantity;
             warehouseClient.updateStock(productId, new ProductUpdateRequest(newStock));
 
-            // 3. Create sale
+            // 3. Create accounting entries FIRST (THIS WILL FAIL IF testPrice = 0.99)
             String saleNumber = "SALE-" + UUID.randomUUID().toString().substring(0, 8).toUpperCase();
             BigDecimal unitPrice = testPrice != null ? testPrice : product.getPrice();
+            BigDecimal totalAmount = unitPrice.multiply(BigDecimal.valueOf(quantity));
+            
+            createAccountingEntry("1200", "Accounts Receivable", "Sale " + saleNumber, totalAmount, "D", saleNumber);
+            createAccountingEntry("4100", "Sales Revenue", "Sale " + saleNumber, totalAmount, "C", saleNumber);
+
+            // 4. Create sale ONLY if accounting succeeded
             Sale sale = new Sale(saleNumber, productId, quantity, unitPrice);
-            sale.setTotalAmount(unitPrice.multiply(BigDecimal.valueOf(quantity)));
-            Sale saved = saleRepository.save(sale);
-
-            // 4. Create accounting entries (THIS WILL FAIL IF testPrice = 0.99)
-            createAccountingEntry("1200", "Accounts Receivable", "Sale " + saleNumber, sale.getTotalAmount(), "D",
-                    saleNumber);
-            createAccountingEntry("4100", "Sales Revenue", "Sale " + saleNumber, sale.getTotalAmount(), "C",
-                    saleNumber);
-
-            return ResponseEntity.ok(saved);
+            sale.setTotalAmount(totalAmount);
+            savedSale = saleRepository.save(sale);
+            
+            System.out.println("TRANSACTION SUCCESSFUL: Sale " + saleNumber + " completed");
+            return ResponseEntity.ok(savedSale);
 
         } catch (Exception e) {
+            System.err.println("TRANSACTION FAILED: " + e.getMessage());
+            
             // ROLLBACK STOCK if accounting fails
             if (originalStock != null) {
                 try {
@@ -68,6 +72,17 @@ public class SalesController {
                     System.err.println("STOCK ROLLBACK FAILED: " + rollbackError.getMessage());
                 }
             }
+            
+            // DELETE SALE if it was saved
+            if (savedSale != null) {
+                try {
+                    saleRepository.delete(savedSale);
+                    System.out.println("SALE ROLLBACK SUCCESSFUL: Deleted sale " + savedSale.getSaleNumber());
+                } catch (Exception rollbackError) {
+                    System.err.println("SALE ROLLBACK FAILED: " + rollbackError.getMessage());
+                }
+            }
+            
             return ResponseEntity.badRequest().build();
         }
     }
@@ -87,6 +102,8 @@ public class SalesController {
             restTemplate.postForObject("http://localhost:8080/api/accounting/journal", request, Object.class);
         } catch (HttpClientErrorException e) {
             throw new RuntimeException("Accounting service failed: " + e.getMessage());
+        } catch (Exception e) {
+            throw new RuntimeException("Accounting service error: " + e.getMessage());
         }
     }
 }
